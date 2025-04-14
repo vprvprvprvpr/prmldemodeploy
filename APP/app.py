@@ -2,14 +2,13 @@ import streamlit as st
 import pickle
 import numpy as np
 import requests
-import os
 from PIL import Image
-from tensorflow.keras.models import load_model
 from sklearn.metrics.pairwise import cosine_similarity
 from feature_extractor import extract_features
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import tempfile
 
 st.set_page_config(page_title="Image Classification & Retrieval", page_icon="🔍")
 st.title("🔍 **CIFAR-10 Image Classification & Similar Image Retrieval**")
@@ -48,14 +47,16 @@ def download_and_load_resnet(filename):
     resnet.eval()
     return resnet
 
+@st.cache_resource
+def download_and_load_model(filename):
+    return download_and_load_pickle(filename)
+
 # Load files
 train_features = download_and_load_numpy_pickle("Resnet_train.pkl")
 train_images = download_and_load_pickle("RawPixels_train.pkl")
 y_train = download_and_load_pickle("Labels_train.pkl")
 resnet = download_and_load_resnet("resnet50_feature_extractor.pth")
-
-# Load model locally
-model = load_model("model.h5")
+model = download_and_load_model("svm_poly_resnet.pkl")
 
 # --- File Uploader with Instructions ---
 uploaded_file = st.file_uploader("Upload a Query Image (JPG/PNG)", type=["jpg", "jpeg", "png"])
@@ -69,7 +70,7 @@ if uploaded_file is not None:
     query_feature = np.array(extract_features(image_np, resnet)).reshape(1, -1)
 
     # --- Classification ---
-    pred_class = int(np.argmax(model.predict(query_feature), axis=1)[0])
+    pred_class = int(model.predict(query_feature)[0])
     st.subheader(f"📌 **Predicted Class: {pred_class}**")
 
     # --- Filter by Predicted Class ---
