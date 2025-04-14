@@ -1,6 +1,8 @@
 import streamlit as st
 import pickle
 import numpy as np
+import requests
+import os
 from PIL import Image
 from tensorflow.keras.models import load_model
 from sklearn.metrics.pairwise import cosine_similarity
@@ -8,39 +10,46 @@ from feature_extractor import extract_features
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from huggingface_hub import hf_hub_download
+
+# Hugging Face repo raw base URL
+HF_BASE_URL = "https://huggingface.co/varaiitj/prmldemotest/resolve/main/"
 
 @st.cache_data
-def load_numpy_pickle_from_huggingface(repo_id, filename):
-    file_path = hf_hub_download(repo_id=repo_id, filename=filename)
-    with open(file_path, "rb") as f:
-        return np.array(pickle.load(f))
+def download_and_load_numpy_pickle(filename):
+    url = HF_BASE_URL + filename
+    response = requests.get(url)
+    response.raise_for_status()
+    return np.array(pickle.loads(response.content))
 
 @st.cache_data
-def load_pickle_from_huggingface(repo_id, filename):
-    file_path = hf_hub_download(repo_id=repo_id, filename=filename)
-    with open(file_path, "rb") as f:
-        return pickle.load(f)
+def download_and_load_pickle(filename):
+    url = HF_BASE_URL + filename
+    response = requests.get(url)
+    response.raise_for_status()
+    return pickle.loads(response.content)
 
 @st.cache_resource
-def load_resnet_from_huggingface(repo_id, filename):
-    file_path = hf_hub_download(repo_id=repo_id, filename=filename)
+def download_and_load_resnet(filename):
+    url = HF_BASE_URL + filename
+    response = requests.get(url)
+    response.raise_for_status()
+    with open("temp_resnet.pth", "wb") as f:
+        f.write(response.content)
     resnet = models.resnet50(weights=None)
     resnet = nn.Sequential(*list(resnet.children())[:-1])
-    resnet.load_state_dict(torch.load(file_path, map_location=torch.device("cpu")))
+    resnet.load_state_dict(torch.load("temp_resnet.pth", map_location=torch.device("cpu")))
     resnet.eval()
     return resnet
 
-repo_id = "varaiitj/prmldemotest"
+# Load files
+train_features = download_and_load_numpy_pickle("Resnet_train.pkl")
+train_images = download_and_load_pickle("RawPixels_train.pkl")
+y_train = download_and_load_pickle("Labels_train.pkl")
+resnet = download_and_load_resnet("resnet50_feature_extractor.pth")
 
-train_features = load_numpy_pickle_from_huggingface(repo_id, "Resnet_train.pkl")
-train_images = load_pickle_from_huggingface(repo_id, "RawPixels_train.pkl")
-y_train = load_pickle_from_huggingface(repo_id, "Labels_train.pkl")
-resnet = load_resnet_from_huggingface(repo_id, "resnet50_feature_extractor.pth")
-
-
-# --- Load Trained Keras Model ---
+# Load model locally
 model = load_model("model.h5")
+
 
 # --- Streamlit App ---
 st.set_page_config(page_title="Image Classification & Retrieval", page_icon="🔍")
