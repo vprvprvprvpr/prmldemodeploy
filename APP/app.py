@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 from tensorflow.keras.models import load_model
 from sklearn.metrics.pairwise import cosine_similarity
-from deploy.APP.feature_extractor import extract_features
+from feature_extractor import extract_features
 import torch
 import torch.nn as nn
 import torchvision.models as models
