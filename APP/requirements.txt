@@ -1,8 +1,9 @@
 streamlit
+keras>=3.0.0
 tensorflow
+torch
 torchvision
 numpy
 pillow
-torch
 scikit-learn
-huggingface_hub
+requests
