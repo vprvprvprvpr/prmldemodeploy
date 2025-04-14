@@ -11,8 +11,15 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+st.set_page_config(page_title="Image Classification & Retrieval", page_icon="🔍")
+st.title("🔍 **CIFAR-10 Image Classification & Similar Image Retrieval**")
+st.markdown("""
+    Welcome to the CIFAR-10 Image Classification and Retrieval system. 
+    Upload an image to get its predicted class and find similar images from our dataset.
+""")
+
 # Hugging Face repo raw base URL
-HF_BASE_URL = "https://huggingface.co/varaiitj/prmldemotest/resolve/main/"
+HF_BASE_URL = "https://huggingface.co/datasets/varaiitj/prmldemotest/resolve/main/"
 
 @st.cache_data
 def download_and_load_numpy_pickle(filename):
@@ -49,15 +56,6 @@ resnet = download_and_load_resnet("resnet50_feature_extractor.pth")
 
 # Load model locally
 model = load_model("model.h5")
-
-
-# --- Streamlit App ---
-st.set_page_config(page_title="Image Classification & Retrieval", page_icon="🔍")
-st.title("🔍 **CIFAR-10 Image Classification & Similar Image Retrieval**")
-st.markdown("""
-    Welcome to the CIFAR-10 Image Classification and Retrieval system. 
-    Upload an image to get its predicted class and find similar images from our dataset.
-""")
 
 # --- File Uploader with Instructions ---
 uploaded_file = st.file_uploader("Upload a Query Image (JPG/PNG)", type=["jpg", "jpeg", "png"])
