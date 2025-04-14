@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 import tempfile
+from keras.models import load_model
 
 st.set_page_config(page_title="Image Classification & Retrieval", page_icon="🔍")
 st.title("🔍 **CIFAR-10 Image Classification & Similar Image Retrieval**")
@@ -48,15 +49,22 @@ def download_and_load_resnet(filename):
     return resnet
 
 @st.cache_resource
-def download_and_load_model(filename):
-    return download_and_load_pickle(filename)
+def download_and_load_keras_model(filename):
+    url = HF_BASE_URL + filename
+    response = requests.get(url)
+    response.raise_for_status()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".keras") as temp_file:
+        temp_file.write(response.content)
+        temp_file.flush()
+        model = load_model(temp_file.name)
+    return model
 
 # Load files
 train_features = download_and_load_numpy_pickle("Resnet_train.pkl")
 train_images = download_and_load_pickle("RawPixels_train.pkl")
 y_train = download_and_load_pickle("Labels_train.pkl")
 resnet = download_and_load_resnet("resnet50_feature_extractor.pth")
-model = download_and_load_model("svm_poly_resnet.pkl")
+model = download_and_load_keras_model("model.keras")
 
 # --- File Uploader with Instructions ---
 uploaded_file = st.file_uploader("Upload a Query Image (JPG/PNG)", type=["jpg", "jpeg", "png"])
@@ -70,7 +78,7 @@ if uploaded_file is not None:
     query_feature = np.array(extract_features(image_np, resnet)).reshape(1, -1)
 
     # --- Classification ---
-    pred_class = int(model.predict(query_feature)[0])
+    pred_class = int(np.argmax(model.predict(query_feature), axis=1)[0])
     st.subheader(f"📌 **Predicted Class: {pred_class}**")
 
     # --- Filter by Predicted Class ---
