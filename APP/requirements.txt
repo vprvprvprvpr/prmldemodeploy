@@ -1,0 +1,8 @@
+streamlit
+tensorflow
+torchvision
+numpy
+pillow
+torch
+scikit-learn
+huggingface_hub
