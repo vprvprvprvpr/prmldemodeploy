@@ -6,11 +6,6 @@ import torchvision.transforms as transforms
 from PIL import Image
 import io
 
-
-resnet = models.resnet50(pretrained=True)
-resnet = nn.Sequential(*list(resnet.children())[:-1])
-resnet.eval()
-
 def extract_features(image_data, model):
     image = Image.fromarray(image_data)
     image = image.convert('RGB')
